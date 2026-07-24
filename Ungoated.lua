@@ -174,7 +174,7 @@ local function createCheckbox(text, default, posY, callback)
 end
 
 -- 1. FOV 슬라이더
-createSlider("FOV SIZE", 10, 300, Settings.FOV, 35, function(val)
+createSlider("FOV SIZE", 10, 600, Settings.FOV, 35, function(val)
     Settings.FOV = val
 end)
 
@@ -184,12 +184,12 @@ createSlider("AIMLOCK POWER", 1, 15, Settings.MULTIPLIER, 85, function(val)
 end)
 
 -- 3. ESP 거리 제한 슬라이더
-createSlider("ESP DISTANCE", 10, 600, Settings.ESPDistance, 135, function(val)
+createSlider("ESP DISTANCE", 10, 3000, Settings.ESPDistance, 135, function(val)
     Settings.ESPDistance = val
 end)
 
 -- 4. 에임봇 거리 제한 슬라이더
-createSlider("AIMBOT DISTANCE", 100, 1000, Settings.AimbotDistance, 185, function(val)
+createSlider("AIMBOT DISTANCE", 100, 3000, Settings.AimbotDistance, 185, function(val)
     Settings.AimbotDistance = val
 end)
 
