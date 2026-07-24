@@ -10,13 +10,19 @@ local Settings = {
     FOV = 55,
     MULTIPLIER = 12,
     Enabled = true,
-    ESPEnabled = true, -- [신규] ESP 켜기/끄기 설정
+    ESPEnabled = true,
     AimKey = Enum.KeyCode.P,
     ToggleKey = Enum.KeyCode.Insert,
-    TargetPart = "Head"
+    TargetPart = "Head",
+    ESPDistance = 200,
+    AimbotDistance = 400,
+    -- [신규] 체크박스 상태
+    ShowESPName = true,
+    ShowESPBox = true,
+    ShowESPHealth = true
 }
 
-local UiVisible = true -- 초기 UI 상태
+local UiVisible = true
 
 ----------------------------------------------------------------                
 -- 1. FOV 시각화 원(Drawing) 설정
@@ -38,7 +44,7 @@ pcall(function() ScreenGui.Parent = CoreGui end)
 if not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
 local Frame = Instance.new("Frame")
-Frame.Size = UDim2.new(0, 220, 0, 235) -- ESP 버튼 추가로 세로 크기 확장 (195 -> 235)
+Frame.Size = UDim2.new(0, 220, 0, 420) -- 체크박스 3개 추가로 크기 확장
 Frame.AnchorPoint = Vector2.new(0.5, 0.5) 
 Frame.Position = UDim2.new(0.5, 0, 0.5, 0)
 Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
@@ -115,20 +121,82 @@ local function createSlider(text, min, max, default, posY, callback)
     end)
 end
 
+-- [수정] 체크박스 생성 함수 - 색상 변경
+local function createCheckbox(text, default, posY, callback)
+    local checkboxContainer = Instance.new("Frame")
+    checkboxContainer.Size = UDim2.new(1, -20, 0, 28)
+    checkboxContainer.Position = UDim2.new(0, 10, 0, posY)
+    checkboxContainer.BackgroundTransparency = 1
+    checkboxContainer.Parent = Frame
+
+    local checkbox = Instance.new("Frame")
+    checkbox.Size = UDim2.new(0, 20, 0, 20)
+    checkbox.Position = UDim2.new(0, 0, 0.5, -10)
+    checkbox.BackgroundColor3 = default and Color3.fromRGB(105, 12, 12) or Color3.fromRGB(60, 60, 60)
+    checkbox.BorderSizePixel = 0
+    checkbox.Parent = checkboxContainer
+
+    local checkboxCorner = Instance.new("UICorner")
+    checkboxCorner.CornerRadius = UDim.new(0, 3)
+    checkboxCorner.Parent = checkbox
+
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -35, 0, 20)
+    label.Position = UDim2.new(0, 30, 0.5, -10)
+    label.Text = text
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.BackgroundTransparency = 1
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Font = Enum.Font.SourceSans
+    label.TextSize = 14
+    label.Parent = checkboxContainer
+
+    local isChecked = default
+
+    local clickButton = Instance.new("TextButton")
+    clickButton.Size = UDim2.new(1, 0, 1, 0)
+    clickButton.BackgroundTransparency = 1
+    clickButton.Text = ""
+    clickButton.Parent = checkboxContainer
+
+    clickButton.MouseButton1Click:Connect(function()
+        isChecked = not isChecked
+        
+        -- [수정] 체크 상태에 따라 색상 변경
+        if isChecked then
+            checkbox.BackgroundColor3 = Color3.fromRGB(105, 12, 12)  -- 체크됨: 빨강색
+        else
+            checkbox.BackgroundColor3 = Color3.fromRGB(60, 60, 60)   -- 체크 안 됨: 회색
+        end
+        
+        callback(isChecked)
+    end)
+end
+
 -- 1. FOV 슬라이더
 createSlider("FOV SIZE", 10, 300, Settings.FOV, 35, function(val)
     Settings.FOV = val
 end)
 
 -- 2. AIMLOCK 슬라이더
-createSlider("AIMLOCK POWER", 1, 20, Settings.MULTIPLIER, 85, function(val)
+createSlider("AIMLOCK POWER", 1, 15, Settings.MULTIPLIER, 85, function(val)
     Settings.MULTIPLIER = val
 end)
 
--- 3. AIM PART 선택 버튼 (Y: 135)
+-- 3. ESP 거리 제한 슬라이더
+createSlider("ESP DISTANCE", 10, 600, Settings.ESPDistance, 135, function(val)
+    Settings.ESPDistance = val
+end)
+
+-- 4. 에임봇 거리 제한 슬라이더
+createSlider("AIMBOT DISTANCE", 100, 1000, Settings.AimbotDistance, 185, function(val)
+    Settings.AimbotDistance = val
+end)
+
+-- 5. AIM PART 선택 버튼 (Y: 235)
 local PartLabel = Instance.new("TextLabel")
 PartLabel.Size = UDim2.new(1, -20, 0, 20)
-PartLabel.Position = UDim2.new(0, 10, 0, 135)
+PartLabel.Position = UDim2.new(0, 10, 0, 235)
 PartLabel.Text = "AIM PART : " .. tostring(Settings.TargetPart)
 PartLabel.TextColor3 = Color3.fromRGB(105, 12, 12)
 PartLabel.BackgroundTransparency = 1
@@ -139,7 +207,7 @@ PartLabel.Parent = Frame
 
 local ToggleButton = Instance.new("TextButton")
 ToggleButton.Size = UDim2.new(1, -20, 0, 22)
-ToggleButton.Position = UDim2.new(0, 10, 0, 157)
+ToggleButton.Position = UDim2.new(0, 10, 0, 257)
 ToggleButton.BackgroundColor3 = Color3.fromRGB(105, 12, 12)
 ToggleButton.Text = "SWITCH TO BODY"
 ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -163,30 +231,17 @@ ToggleButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- 4. [신규] ESP ON/OFF 토글 버튼 (Y: 188)
-local EspBtn = Instance.new("TextButton")
-EspBtn.Size = UDim2.new(1, -20, 0, 28)
-EspBtn.Position = UDim2.new(0, 10, 0, 192)
-EspBtn.BackgroundColor3 = Color3.fromRGB(105, 12, 12)
-EspBtn.Text = "ESP : ON"
-EspBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-EspBtn.Font = Enum.Font.SourceSansBold
-EspBtn.TextSize = 14
-EspBtn.Parent = Frame
+-- [신규] 체크박스 3개 추가 (Y: 290)
+createCheckbox("Show Name", Settings.ShowESPName, 290, function(val)
+    Settings.ShowESPName = val
+end)
 
-local EspCorner = Instance.new("UICorner")
-EspCorner.CornerRadius = UDim.new(0, 5)
-EspCorner.Parent = EspBtn
+createCheckbox("Show Box", Settings.ShowESPBox, 328, function(val)
+    Settings.ShowESPBox = val
+end)
 
-EspBtn.MouseButton1Click:Connect(function()
-    Settings.ESPEnabled = not Settings.ESPEnabled
-    if Settings.ESPEnabled then
-        EspBtn.Text = "ESP : ON"
-        EspBtn.BackgroundColor3 = Color3.fromRGB(105, 12, 12)
-    else
-        EspBtn.Text = "ESP : OFF"
-        EspBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
-    end
+createCheckbox("Show Health", Settings.ShowESPHealth, 366, function(val)
+    Settings.ShowESPHealth = val
 end)
 
 ----------------------------------------------------------------                
@@ -201,70 +256,109 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 end)
 
 ----------------------------------------------------------------                
--- 4. ESP 로직 (통합)
+-- 4. ESP 로직 (체크박스로 개별 제어)
 ----------------------------------------------------------------
 local function ESP(player)
     local DrawObject = {
         Box = Drawing.new("Square"),
         BoxOutline = Drawing.new("Square"),
-        Name = Drawing.new("Text")
+        Name = Drawing.new("Text"),
+        Health = Drawing.new("Line"),
+        HealthOutline = Drawing.new("Line")
     }
 
     RunService.RenderStepped:Connect(function()
         local Character = player.Character
 
-        -- ESP 스위치가 ON 상태이고 대상 캐릭터가 존재할 때만 표시
         if Settings.ESPEnabled and Character then
             local HumanoidRootPart = Character:FindFirstChild("HumanoidRootPart")
             local Humanoid = Character:FindFirstChildOfClass("Humanoid")
+            local LocalHRP = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
             
-            if HumanoidRootPart and Humanoid and Humanoid.Health > 0 then
-                local Position, OnScreen = Camera:WorldToViewportPoint(HumanoidRootPart.Position)
-                if OnScreen then
-                    local scale = 1 / (Position.Z * math.tan(math.rad(Camera.FieldOfView * 0.5)) * 2) * 1000
-                    local width, height = math.floor(4.5 * scale), math.floor(6 * scale)
-                    local x, y = math.floor(Position.X), math.floor(Position.Y)
-                    local xPosition, yPosition = math.floor(x - width * 0.5), math.floor((y - height * 0.5) + (0.5 * scale))
+            if HumanoidRootPart and Humanoid and Humanoid.Health > 0 and LocalHRP then
+                local distance = (HumanoidRootPart.Position - LocalHRP.Position).Magnitude
+                
+                if distance <= Settings.ESPDistance then
+                    local Position, OnScreen = Camera:WorldToViewportPoint(HumanoidRootPart.Position)
+                    if OnScreen and Position.Z > 0 then
+                        local scale = 1 / (Position.Z * math.tan(math.rad(Camera.FieldOfView * 0.5)) * 2) * 1000
+                        local width, height = math.floor(4.5 * scale), math.floor(6 * scale)
+                        local x, y = math.floor(Position.X), math.floor(Position.Y)
+                        local xPosition, yPosition = math.floor(x - width * 0.5), math.floor((y - height * 0.5) + (0.5 * scale))
 
-                    -- Box 설정
-                    DrawObject.Box.Size = Vector2.new(width, height)
-                    DrawObject.Box.Position = Vector2.new(xPosition, yPosition)
-                    DrawObject.Box.Visible = true
-                    DrawObject.Box.Color = Color3.fromRGB(255, 255, 255)
-                    DrawObject.Box.Thickness = 1
+                        -- [수정] Box 표시 여부 체크
+                        if Settings.ShowESPBox then
+                            DrawObject.Box.Size = Vector2.new(width, height)
+                            DrawObject.Box.Position = Vector2.new(xPosition, yPosition)
+                            DrawObject.Box.Visible = true
+                            DrawObject.Box.Color = Color3.fromRGB(255, 255, 255)
+                            DrawObject.Box.Thickness = 1
 
-                    -- Box Outline 설정
-                    DrawObject.BoxOutline.Size = Vector2.new(width, height)
-                    DrawObject.BoxOutline.Position = Vector2.new(xPosition, yPosition)
-                    DrawObject.BoxOutline.Visible = true
-                    DrawObject.BoxOutline.Color = Color3.fromRGB(0, 0, 0)
-                    DrawObject.BoxOutline.Thickness = 2
-                    DrawObject.BoxOutline.ZIndex = 1
-                    DrawObject.Box.ZIndex = 2
+                            DrawObject.BoxOutline.Size = Vector2.new(width, height)
+                            DrawObject.BoxOutline.Position = Vector2.new(xPosition, yPosition)
+                            DrawObject.BoxOutline.Visible = true
+                            DrawObject.BoxOutline.Color = Color3.fromRGB(0, 0, 0)
+                            DrawObject.BoxOutline.Thickness = 2
+                            DrawObject.BoxOutline.ZIndex = 1
+                            DrawObject.Box.ZIndex = 2
+                        else
+                            DrawObject.Box.Visible = false
+                            DrawObject.BoxOutline.Visible = false
+                        end
 
-                    -- Name 설정
-                    DrawObject.Name.Text = player.Name
-                    DrawObject.Name.Size = 14
-                    DrawObject.Name.Center = true
-                    DrawObject.Name.Outline = true
-                    DrawObject.Name.OutlineColor = Color3.fromRGB(0, 0, 0)
-                    DrawObject.Name.Color = Color3.fromRGB(255, 255, 255)
-                    DrawObject.Name.Position = Vector2.new(xPosition + (width / 2), yPosition - 16)
-                    DrawObject.Name.Visible = true
-                    DrawObject.Name.ZIndex = 3
-                    return
+                        -- [수정] Name 표시 여부 체크
+                        if Settings.ShowESPName then
+                            DrawObject.Name.Text = player.Name
+                            DrawObject.Name.Size = 14
+                            DrawObject.Name.Center = true
+                            DrawObject.Name.Outline = true
+                            DrawObject.Name.OutlineColor = Color3.fromRGB(0, 0, 0)
+                            DrawObject.Name.Color = Color3.fromRGB(255, 255, 255)
+                            DrawObject.Name.Position = Vector2.new(xPosition + (width / 2), yPosition - 16)
+                            DrawObject.Name.Visible = true
+                            DrawObject.Name.ZIndex = 3
+                        else
+                            DrawObject.Name.Visible = false
+                        end
+
+                        -- [수정] Health 표시 여부 체크
+                        if Settings.ShowESPHealth then
+                            local healthPercent = 100 / (Humanoid.MaxHealth / Humanoid.Health)
+                            
+                            DrawObject.HealthOutline.From = Vector2.new(xPosition - 3, yPosition)
+                            DrawObject.HealthOutline.To = Vector2.new(xPosition - 3, yPosition + height)
+                            DrawObject.Health.From = Vector2.new(xPosition - 3, (yPosition + height) - 1)
+                            DrawObject.Health.To = Vector2.new(xPosition - 3, ((DrawObject.Health.From.Y - ((height / 100) * healthPercent))) + 2)
+                            
+                            DrawObject.Health.Color = Color3.new(1,0,0):Lerp(Color3.new(0,1,0), healthPercent * 0.01)
+                            DrawObject.HealthOutline.Color = Color3.new(0,0,0)
+                            
+                            DrawObject.Health.Thickness = 3
+                            DrawObject.HealthOutline.Thickness = 2
+                            
+                            DrawObject.Health.ZIndex = 2
+                            DrawObject.HealthOutline.ZIndex = 1
+                            
+                            DrawObject.Health.Visible = true
+                            DrawObject.HealthOutline.Visible = true
+                        else
+                            DrawObject.Health.Visible = false
+                            DrawObject.HealthOutline.Visible = false
+                        end
+                        return
+                    end
                 end
             end
         end
 
-        -- 조건을 만족하지 못하면 일괄 숨김
         DrawObject.Box.Visible = false
         DrawObject.BoxOutline.Visible = false
         DrawObject.Name.Visible = false
+        DrawObject.Health.Visible = false
+        DrawObject.HealthOutline.Visible = false
     end)
 end
 
--- 서버의 모든 플레이어 및 새로 들어오는 유저에게 ESP 연동
 for _, v in pairs(PlayerService:GetPlayers()) do
     if v ~= LocalPlayer then
         ESP(v)
@@ -284,6 +378,7 @@ local function getClosest()
     local target = nil
     local shortestDist = Settings.FOV 
     local mousePos = UserInputService:GetMouseLocation()
+    local LocalHRP = LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("HumanoidRootPart")
 
     for _, p in pairs(PlayerService:GetPlayers()) do
         if p ~= LocalPlayer and p.Character then
@@ -296,13 +391,17 @@ local function getClosest()
                 aimPart = p.Character:FindFirstChild("UpperTorso") or p.Character:FindFirstChild("Torso")
             end
             
-            if aimPart and hum and hum.Health > 0 then
-                local pos, onScreen = Camera:WorldToViewportPoint(aimPart.Position)
-                if onScreen then
-                    local dist = (Vector2.new(pos.X, pos.Y) - mousePos).Magnitude
-                    if dist < shortestDist then
-                        shortestDist = dist
-                        target = pos
+            if aimPart and hum and hum.Health > 0 and LocalHRP then
+                local distance = (aimPart.Position - LocalHRP.Position).Magnitude
+                
+                if distance <= Settings.AimbotDistance then
+                    local pos, onScreen = Camera:WorldToViewportPoint(aimPart.Position)
+                    if onScreen then
+                        local dist = (Vector2.new(pos.X, pos.Y) - mousePos).Magnitude
+                        if dist < shortestDist then
+                            shortestDist = dist
+                            target = pos
+                        end
                     end
                 end
             end
