@@ -7,14 +7,14 @@ local LocalPlayer = PlayerService.LocalPlayer
 
 -- 실시간 설정 변수
 local Settings = {
-    FOV = 55,
+    FOV = 100,
     MULTIPLIER = 12,
     Enabled = true,
     ESPEnabled = true,
     AimKey = Enum.KeyCode.P,
     ToggleKey = Enum.KeyCode.Insert,
     TargetPart = "Head",
-    ESPDistance = 200,
+    ESPDistance = 400,
     AimbotDistance = 400,
     -- [신규] 체크박스 상태
     ShowESPName = true,
