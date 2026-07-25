@@ -8,8 +8,7 @@ local LocalPlayer = PlayerService.LocalPlayer
 -- 실시간 설정 변수
 local Settings = {
     FOV = 100,
-    SmoothingDistance = 1,      -- 붙는중 스무스
-    SmoothingLocked = 12,         -- 붙었을때 스무스
+    MULTIPLIER = 12,
     Enabled = true,
     ESPEnabled = true,
     AimKey = Enum.KeyCode.P,
@@ -19,8 +18,7 @@ local Settings = {
     AimbotDistance = 400,
     ShowESPName = true,
     ShowESPBox = true,
-    ShowESPHealth = true,
-    LockThreshold = 15            -- 붙었다고 판단하는 거리 (픽셀)
+    ShowESPHealth = true
 }
 
 local UiVisible = true
@@ -45,7 +43,7 @@ pcall(function() ScreenGui.Parent = CoreGui end)
 if not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
 local Frame = Instance.new("Frame")
-Frame.Size = UDim2.new(0, 220, 0, 500) -- 크기 조정
+Frame.Size = UDim2.new(0, 220, 0, 450)
 Frame.AnchorPoint = Vector2.new(0.5, 0.5) 
 Frame.Position = UDim2.new(0.5, 0, 0.5, 0)
 Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
@@ -174,34 +172,29 @@ local function createCheckbox(text, default, posY, callback)
 end
 
 -- 1. FOV 슬라이더
-createSlider("FOV SIZE", 10, 300, Settings.FOV, 35, function(val)
+createSlider("FOV SIZE", 10, 500, Settings.FOV, 35, function(val)
     Settings.FOV = val
 end)
 
--- 2. 붙는중 스무스 슬라이더
-createSlider("SMOOTHING LOCKING", 1, 20, Settings.SmoothingDistance, 85, function(val)
-    Settings.SmoothingDistance = val
+-- 2. 스무스 슬라이더
+createSlider("SMOOTHING", 1, 15, Settings.MULTIPLIER, 85, function(val)
+    Settings.MULTIPLIER = val
 end)
 
--- 3. 붙었을때 스무스 슬라이더
-createSlider("SMOOTHING LOCKED", 1, 20, Settings.SmoothingLocked, 135, function(val)
-    Settings.SmoothingLocked = val
-end)
-
--- 4. ESP 거리 제한 슬라이더
-createSlider("ESP DISTANCE", 10, 5000, Settings.ESPDistance, 185, function(val)
+-- 3. ESP 거리 제한 슬라이더
+createSlider("ESP DISTANCE", 10, 5000, Settings.ESPDistance, 135, function(val)
     Settings.ESPDistance = val
 end)
 
--- 5. 에임봇 거리 제한 슬라이더
-createSlider("AIMBOT DISTANCE", 100, 5000, Settings.AimbotDistance, 235, function(val)
+-- 4. 에임봇 거리 제한 슬라이더
+createSlider("AIMBOT DISTANCE", 100, 5000, Settings.AimbotDistance, 185, function(val)
     Settings.AimbotDistance = val
 end)
 
--- 6. AIM PART 선택 버튼
+-- 5. AIM PART 선택 버튼
 local PartLabel = Instance.new("TextLabel")
 PartLabel.Size = UDim2.new(1, -20, 0, 20)
-PartLabel.Position = UDim2.new(0, 10, 0, 285)
+PartLabel.Position = UDim2.new(0, 10, 0, 235)
 PartLabel.Text = "AIM PART : " .. tostring(Settings.TargetPart)
 PartLabel.TextColor3 = Color3.fromRGB(105, 12, 12)
 PartLabel.BackgroundTransparency = 1
@@ -212,7 +205,7 @@ PartLabel.Parent = Frame
 
 local ToggleButton = Instance.new("TextButton")
 ToggleButton.Size = UDim2.new(1, -20, 0, 22)
-ToggleButton.Position = UDim2.new(0, 10, 0, 307)
+ToggleButton.Position = UDim2.new(0, 10, 0, 257)
 ToggleButton.BackgroundColor3 = Color3.fromRGB(105, 12, 12)
 ToggleButton.Text = "SWITCH TO BODY"
 ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -237,15 +230,15 @@ ToggleButton.MouseButton1Click:Connect(function()
 end)
 
 -- 체크박스 3개
-createCheckbox("Show Name", Settings.ShowESPName, 340, function(val)
+createCheckbox("Show Name", Settings.ShowESPName, 290, function(val)
     Settings.ShowESPName = val
 end)
 
-createCheckbox("Show Box", Settings.ShowESPBox, 378, function(val)
+createCheckbox("Show Box", Settings.ShowESPBox, 328, function(val)
     Settings.ShowESPBox = val
 end)
 
-createCheckbox("Show Health", Settings.ShowESPHealth, 416, function(val)
+createCheckbox("Show Health", Settings.ShowESPHealth, 366, function(val)
     Settings.ShowESPHealth = val
 end)
 
@@ -374,7 +367,7 @@ PlayerService.PlayerAdded:Connect(function(v)
 end)
 
 ----------------------------------------------------------------                
--- 5. 에임봇 로직 (분할 스무스)
+-- 5. 에임봇 로직 (원래 방식)
 ----------------------------------------------------------------
 local function getClosest()
     local target = nil
@@ -424,18 +417,8 @@ RunService.RenderStepped:Connect(function()
             local diffX = targetPos.X - mousePos.X
             local diffY = targetPos.Y - mousePos.Y
             
-            -- 타겟까지의 거리 계산
-            local distanceToTarget = math.sqrt(diffX * diffX + diffY * diffY)
-            
-            -- 붙었는지 판단
-            local isLocked = distanceToTarget <= Settings.LockThreshold
-            
-            -- 상태에 따라 다른 스무스 적용
-            local smoothing = isLocked and Settings.SmoothingLocked or Settings.SmoothingDistance
-            
-            -- 스무스 적용
-            local finalDiffX = (diffX * smoothing)
-            local finalDiffY = (diffY * smoothing)
+            local finalDiffX = (diffX * Settings.MULTIPLIER)
+            local finalDiffY = (diffY * Settings.MULTIPLIER)
             
             mousemoverel(finalDiffX, finalDiffY)
         end
