@@ -8,7 +8,8 @@ local LocalPlayer = PlayerService.LocalPlayer
 -- 실시간 설정 변수
 local Settings = {
     FOV = 100,
-    MULTIPLIER = 12,
+    SmoothingDistance = 1,      -- 붙는중 스무스
+    SmoothingLocked = 12,         -- 붙었을때 스무스
     Enabled = true,
     ESPEnabled = true,
     AimKey = Enum.KeyCode.P,
@@ -16,10 +17,10 @@ local Settings = {
     TargetPart = "Head",
     ESPDistance = 400,
     AimbotDistance = 400,
-    -- [신규] 체크박스 상태
     ShowESPName = true,
     ShowESPBox = true,
-    ShowESPHealth = true
+    ShowESPHealth = true,
+    LockThreshold = 15            -- 붙었다고 판단하는 거리 (픽셀)
 }
 
 local UiVisible = true
@@ -44,7 +45,7 @@ pcall(function() ScreenGui.Parent = CoreGui end)
 if not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
 local Frame = Instance.new("Frame")
-Frame.Size = UDim2.new(0, 220, 0, 420) -- 체크박스 3개 추가로 크기 확장
+Frame.Size = UDim2.new(0, 220, 0, 500) -- 크기 조정
 Frame.AnchorPoint = Vector2.new(0.5, 0.5) 
 Frame.Position = UDim2.new(0.5, 0, 0.5, 0)
 Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
@@ -121,7 +122,7 @@ local function createSlider(text, min, max, default, posY, callback)
     end)
 end
 
--- [수정] 체크박스 생성 함수 - 색상 변경
+-- 체크박스 생성 함수
 local function createCheckbox(text, default, posY, callback)
     local checkboxContainer = Instance.new("Frame")
     checkboxContainer.Size = UDim2.new(1, -20, 0, 28)
@@ -162,11 +163,10 @@ local function createCheckbox(text, default, posY, callback)
     clickButton.MouseButton1Click:Connect(function()
         isChecked = not isChecked
         
-        -- [수정] 체크 상태에 따라 색상 변경
         if isChecked then
-            checkbox.BackgroundColor3 = Color3.fromRGB(105, 12, 12)  -- 체크됨: 빨강색
+            checkbox.BackgroundColor3 = Color3.fromRGB(105, 12, 12)
         else
-            checkbox.BackgroundColor3 = Color3.fromRGB(60, 60, 60)   -- 체크 안 됨: 회색
+            checkbox.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
         end
         
         callback(isChecked)
@@ -174,29 +174,34 @@ local function createCheckbox(text, default, posY, callback)
 end
 
 -- 1. FOV 슬라이더
-createSlider("FOV SIZE", 10, 600, Settings.FOV, 35, function(val)
+createSlider("FOV SIZE", 10, 300, Settings.FOV, 35, function(val)
     Settings.FOV = val
 end)
 
--- 2. AIMLOCK 슬라이더
-createSlider("AIMLOCK POWER", 1, 15, Settings.MULTIPLIER, 85, function(val)
-    Settings.MULTIPLIER = val
+-- 2. 붙는중 스무스 슬라이더
+createSlider("SMOOTHING LOCKING", 1, 20, Settings.SmoothingDistance, 85, function(val)
+    Settings.SmoothingDistance = val
 end)
 
--- 3. ESP 거리 제한 슬라이더
-createSlider("ESP DISTANCE", 10, 3000, Settings.ESPDistance, 135, function(val)
+-- 3. 붙었을때 스무스 슬라이더
+createSlider("SMOOTHING LOCKED", 1, 20, Settings.SmoothingLocked, 135, function(val)
+    Settings.SmoothingLocked = val
+end)
+
+-- 4. ESP 거리 제한 슬라이더
+createSlider("ESP DISTANCE", 10, 5000, Settings.ESPDistance, 185, function(val)
     Settings.ESPDistance = val
 end)
 
--- 4. 에임봇 거리 제한 슬라이더
-createSlider("AIMBOT DISTANCE", 100, 3000, Settings.AimbotDistance, 185, function(val)
+-- 5. 에임봇 거리 제한 슬라이더
+createSlider("AIMBOT DISTANCE", 100, 5000, Settings.AimbotDistance, 235, function(val)
     Settings.AimbotDistance = val
 end)
 
--- 5. AIM PART 선택 버튼 (Y: 235)
+-- 6. AIM PART 선택 버튼
 local PartLabel = Instance.new("TextLabel")
 PartLabel.Size = UDim2.new(1, -20, 0, 20)
-PartLabel.Position = UDim2.new(0, 10, 0, 235)
+PartLabel.Position = UDim2.new(0, 10, 0, 285)
 PartLabel.Text = "AIM PART : " .. tostring(Settings.TargetPart)
 PartLabel.TextColor3 = Color3.fromRGB(105, 12, 12)
 PartLabel.BackgroundTransparency = 1
@@ -207,7 +212,7 @@ PartLabel.Parent = Frame
 
 local ToggleButton = Instance.new("TextButton")
 ToggleButton.Size = UDim2.new(1, -20, 0, 22)
-ToggleButton.Position = UDim2.new(0, 10, 0, 257)
+ToggleButton.Position = UDim2.new(0, 10, 0, 307)
 ToggleButton.BackgroundColor3 = Color3.fromRGB(105, 12, 12)
 ToggleButton.Text = "SWITCH TO BODY"
 ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -231,16 +236,16 @@ ToggleButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- [신규] 체크박스 3개 추가 (Y: 290)
-createCheckbox("Show Name", Settings.ShowESPName, 290, function(val)
+-- 체크박스 3개
+createCheckbox("Show Name", Settings.ShowESPName, 340, function(val)
     Settings.ShowESPName = val
 end)
 
-createCheckbox("Show Box", Settings.ShowESPBox, 328, function(val)
+createCheckbox("Show Box", Settings.ShowESPBox, 378, function(val)
     Settings.ShowESPBox = val
 end)
 
-createCheckbox("Show Health", Settings.ShowESPHealth, 366, function(val)
+createCheckbox("Show Health", Settings.ShowESPHealth, 416, function(val)
     Settings.ShowESPHealth = val
 end)
 
@@ -286,7 +291,6 @@ local function ESP(player)
                         local x, y = math.floor(Position.X), math.floor(Position.Y)
                         local xPosition, yPosition = math.floor(x - width * 0.5), math.floor((y - height * 0.5) + (0.5 * scale))
 
-                        -- [수정] Box 표시 여부 체크
                         if Settings.ShowESPBox then
                             DrawObject.Box.Size = Vector2.new(width, height)
                             DrawObject.Box.Position = Vector2.new(xPosition, yPosition)
@@ -306,7 +310,6 @@ local function ESP(player)
                             DrawObject.BoxOutline.Visible = false
                         end
 
-                        -- [수정] Name 표시 여부 체크
                         if Settings.ShowESPName then
                             DrawObject.Name.Text = player.Name
                             DrawObject.Name.Size = 14
@@ -321,7 +324,6 @@ local function ESP(player)
                             DrawObject.Name.Visible = false
                         end
 
-                        -- [수정] Health 표시 여부 체크
                         if Settings.ShowESPHealth then
                             local healthPercent = 100 / (Humanoid.MaxHealth / Humanoid.Health)
                             
@@ -372,7 +374,7 @@ PlayerService.PlayerAdded:Connect(function(v)
 end)
 
 ----------------------------------------------------------------                
--- 5. 에임봇 로직
+-- 5. 에임봇 로직 (분할 스무스)
 ----------------------------------------------------------------
 local function getClosest()
     local target = nil
@@ -419,10 +421,23 @@ RunService.RenderStepped:Connect(function()
     if UserInputService:IsKeyDown(Settings.AimKey) then
         local targetPos = getClosest()
         if targetPos then
-            local diffX = (targetPos.X - mousePos.X) * Settings.MULTIPLIER
-            local diffY = (targetPos.Y - mousePos.Y) * Settings.MULTIPLIER
+            local diffX = targetPos.X - mousePos.X
+            local diffY = targetPos.Y - mousePos.Y
             
-            mousemoverel(diffX, diffY)
+            -- 타겟까지의 거리 계산
+            local distanceToTarget = math.sqrt(diffX * diffX + diffY * diffY)
+            
+            -- 붙었는지 판단
+            local isLocked = distanceToTarget <= Settings.LockThreshold
+            
+            -- 상태에 따라 다른 스무스 적용
+            local smoothing = isLocked and Settings.SmoothingLocked or Settings.SmoothingDistance
+            
+            -- 스무스 적용
+            local finalDiffX = (diffX * smoothing)
+            local finalDiffY = (diffY * smoothing)
+            
+            mousemoverel(finalDiffX, finalDiffY)
         end
     end
 end)
