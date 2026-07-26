@@ -18,7 +18,8 @@ local Settings = {
     AimbotDistance = 400,
     ShowESPName = true,
     ShowESPBox = true,
-    ShowESPHealth = true
+    ShowESPHealth = true,
+    ShowESPDistance = true
 }
 
 local UiVisible = true
@@ -43,7 +44,7 @@ pcall(function() ScreenGui.Parent = CoreGui end)
 if not ScreenGui.Parent then ScreenGui.Parent = LocalPlayer:WaitForChild("PlayerGui") end
 
 local Frame = Instance.new("Frame")
-Frame.Size = UDim2.new(0, 220, 0, 450)
+Frame.Size = UDim2.new(0, 220, 0, 480)
 Frame.AnchorPoint = Vector2.new(0.5, 0.5) 
 Frame.Position = UDim2.new(0.5, 0, 0.5, 0)
 Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
@@ -229,7 +230,7 @@ ToggleButton.MouseButton1Click:Connect(function()
     end
 end)
 
--- 체크박스 3개
+-- 체크박스 4개
 createCheckbox("Show Name", Settings.ShowESPName, 290, function(val)
     Settings.ShowESPName = val
 end)
@@ -240,6 +241,10 @@ end)
 
 createCheckbox("Show Health", Settings.ShowESPHealth, 366, function(val)
     Settings.ShowESPHealth = val
+end)
+
+createCheckbox("Show Distance", Settings.ShowESPDistance, 404, function(val)
+    Settings.ShowESPDistance = val
 end)
 
 ----------------------------------------------------------------                
@@ -254,12 +259,13 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 end)
 
 ----------------------------------------------------------------                
--- 4. ESP 로직 (체크박스로 개별 제어)
+-- 4. ESP 로직 (거리 표시만)
 ----------------------------------------------------------------
 local function ESP(player)
     local DrawObject = {
         Box = Drawing.new("Square"),
         BoxOutline = Drawing.new("Square"),
+        Distance = Drawing.new("Text"),
         Name = Drawing.new("Text"),
         Health = Drawing.new("Line"),
         HealthOutline = Drawing.new("Line")
@@ -301,6 +307,21 @@ local function ESP(player)
                         else
                             DrawObject.Box.Visible = false
                             DrawObject.BoxOutline.Visible = false
+                        end
+
+                        -- 거리 표시 (닉 위에)
+                        if Settings.ShowESPName and Settings.ShowESPDistance then
+                            DrawObject.Distance.Text = "Dis : " .. math.floor(distance)
+                            DrawObject.Distance.Size = 14
+                            DrawObject.Distance.Center = true
+                            DrawObject.Distance.Outline = true
+                            DrawObject.Distance.OutlineColor = Color3.fromRGB(0, 0, 0)
+                            DrawObject.Distance.Color = Color3.fromRGB(255, 255, 255)
+                            DrawObject.Distance.Position = Vector2.new(xPosition + (width / 2), yPosition - 30)
+                            DrawObject.Distance.Visible = true
+                            DrawObject.Distance.ZIndex = 3
+                        else
+                            DrawObject.Distance.Visible = false
                         end
 
                         if Settings.ShowESPName then
@@ -348,6 +369,7 @@ local function ESP(player)
 
         DrawObject.Box.Visible = false
         DrawObject.BoxOutline.Visible = false
+        DrawObject.Distance.Visible = false
         DrawObject.Name.Visible = false
         DrawObject.Health.Visible = false
         DrawObject.HealthOutline.Visible = false
