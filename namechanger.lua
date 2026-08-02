@@ -39,6 +39,12 @@ local usernameInput
 local profileImageInput
 local statusLabel
 
+-- 입력값 저장 변수 (UI 닫혀있을 때도 사용)
+local savedSizeX = RECT_SIZE_X
+local savedSizeY = RECT_SIZE_Y
+local savedOffsetX = RECT_OFFSET_X
+local savedOffsetY = RECT_OFFSET_Y
+
 -- UI 생성 함수
 local function createGui()
     if screenGui and screenGui.Parent then
@@ -69,7 +75,7 @@ local function createGui()
     titleLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
     titleLabel.TextSize = 18
     titleLabel.Font = Enum.Font.GothamBold
-    titleLabel.Text = "🎮 닉네임 & 계급장 변경 시스템"
+    titleLabel.Text = "NAMECHANGER V2"
     titleLabel.Parent = mainFrame
 
     local titleCorner = Instance.new("UICorner")
@@ -124,10 +130,10 @@ local function createGui()
     accountInput = createInputRow("본닉:", "", 105)
     rebirthInput = createInputRow("환생수:", "", 135)
     
-    sizeXInput = createInputRow("계급장 Size X:", RECT_SIZE_X, 165)
-    sizeYInput = createInputRow("계급장 Size Y:", RECT_SIZE_Y, 195)
-    offsetXInput = createInputRow("계급장 Offset X:", RECT_OFFSET_X, 225)
-    offsetYInput = createInputRow("계급장 Offset Y:", RECT_OFFSET_Y, 255)
+    sizeXInput = createInputRow("계급장 Size X:", savedSizeX, 165)
+    sizeYInput = createInputRow("계급장 Size Y:", savedSizeY, 195)
+    offsetXInput = createInputRow("계급장 Offset X:", savedOffsetX, 225)
+    offsetYInput = createInputRow("계급장 Offset Y:", savedOffsetY, 255)
 
     profileImageInput = createInputRow("프로필 ID:", "", 285)
     profileImageInput.PlaceholderText = "플레이어 ID"
@@ -219,6 +225,12 @@ local function createGui()
         DISPLAY_NAME = displayInput.Text ~= "" and displayInput.Text or DISPLAY_NAME
         ACCOUNT_NAME = accountInput.Text ~= "" and accountInput.Text or ACCOUNT_NAME
         REBIRTH_COUNT = rebirthInput.Text ~= "" and rebirthInput.Text or REBIRTH_COUNT
+        
+        -- 오프셋 값 저장
+        savedSizeX = tonumber(sizeXInput.Text) or savedSizeX
+        savedSizeY = tonumber(sizeYInput.Text) or savedSizeY
+        savedOffsetX = tonumber(offsetXInput.Text) or savedOffsetX
+        savedOffsetY = tonumber(offsetYInput.Text) or savedOffsetY
         
         local profileId = profileImageInput.Text
         if profileId ~= "" then
@@ -362,10 +374,10 @@ local function changeKillcamNicknames()
                     badgeIcon.Image = REBIRTH_10_BADGE
                 end
 
-                local sX = tonumber(sizeXInput and sizeXInput.Text) or RECT_SIZE_X
-                local sY = tonumber(sizeYInput and sizeYInput.Text) or RECT_SIZE_Y
-                local oX = tonumber(offsetXInput and offsetXInput.Text) or RECT_OFFSET_X
-                local oY = tonumber(offsetYInput and offsetYInput.Text) or RECT_OFFSET_Y
+                local sX = tonumber(sizeXInput and sizeXInput.Text) or savedSizeX
+                local sY = tonumber(sizeYInput and sizeYInput.Text) or savedSizeY
+                local oX = tonumber(offsetXInput and offsetXInput.Text) or savedOffsetX
+                local oY = tonumber(offsetYInput and offsetYInput.Text) or savedOffsetY
 
                 for _, child in ipairs(killedBy:GetChildren()) do
                     if child:IsA("ImageLabel") or child:IsA("ImageButton") then
