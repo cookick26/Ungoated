@@ -9,6 +9,7 @@ local DISPLAY_NAME = "5678"  -- 디플닉
 local ACCOUNT_NAME = "1234"  -- 본닉
 local REBIRTH_COUNT = "10"   -- 환생수
 local REBIRTH_10_BADGE = "rbxassetid://73940890241936"  -- 10환생 계급장
+local PROFILE_IMAGE = "rbxthumb://type=AvatarHeadShot&id=11187718885&w=420&h=420" -- 프로필 사진
 
 -- 계급장 좌표 조절 기본값
 local RECT_SIZE_X = 100
@@ -35,6 +36,7 @@ local playerInput
 local rankInput
 local displayNicknameInput
 local usernameInput
+local profileImageInput
 local statusLabel
 
 -- UI 생성 함수
@@ -50,8 +52,8 @@ local function createGui()
 
     mainFrame = Instance.new("Frame")
     mainFrame.Name = "MainFrame"
-    mainFrame.Size = UDim2.new(0, 400, 0, 720)
-    mainFrame.Position = UDim2.new(0.5, -200, 0.5, -360)
+    mainFrame.Size = UDim2.new(0, 400, 0, 760)
+    mainFrame.Position = UDim2.new(0.5, -200, 0.5, -380)
     mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
     mainFrame.BorderSizePixel = 0
     mainFrame.Parent = screenGui
@@ -118,19 +120,22 @@ local function createGui()
         return input
     end
 
-    displayInput = createInputRow("디플닉:", DISPLAY_NAME, 75)
-    accountInput = createInputRow("본닉:", ACCOUNT_NAME, 105)
-    rebirthInput = createInputRow("환생수:", REBIRTH_COUNT, 135)
+    displayInput = createInputRow("디플닉:", "", 75)
+    accountInput = createInputRow("본닉:", "", 105)
+    rebirthInput = createInputRow("환생수:", "", 135)
     
     sizeXInput = createInputRow("계급장 Size X:", RECT_SIZE_X, 165)
     sizeYInput = createInputRow("계급장 Size Y:", RECT_SIZE_Y, 195)
     offsetXInput = createInputRow("계급장 Offset X:", RECT_OFFSET_X, 225)
     offsetYInput = createInputRow("계급장 Offset Y:", RECT_OFFSET_Y, 255)
 
+    profileImageInput = createInputRow("프로필 ID:", "", 285)
+    profileImageInput.PlaceholderText = "플레이어 ID"
+
     -- 킬캠 적용 버튼
     local killcamApplyButton = Instance.new("TextButton")
     killcamApplyButton.Size = UDim2.new(1, -20, 0, 30)
-    killcamApplyButton.Position = UDim2.new(0, 10, 0, 285)
+    killcamApplyButton.Position = UDim2.new(0, 10, 0, 315)
     killcamApplyButton.BackgroundColor3 = Color3.fromRGB(0, 150, 100)
     killcamApplyButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     killcamApplyButton.TextSize = 12
@@ -147,7 +152,7 @@ local function createGui()
     local playerSectionLabel = Instance.new("TextLabel")
     playerSectionLabel.Name = "PlayerSection"
     playerSectionLabel.Size = UDim2.new(1, -20, 0, 25)
-    playerSectionLabel.Position = UDim2.new(0, 10, 0, 325)
+    playerSectionLabel.Position = UDim2.new(0, 10, 0, 355)
     playerSectionLabel.BackgroundTransparency = 1
     playerSectionLabel.TextColor3 = Color3.fromRGB(100, 200, 255)
     playerSectionLabel.TextSize = 14
@@ -156,21 +161,21 @@ local function createGui()
     playerSectionLabel.TextXAlignment = Enum.TextXAlignment.Left
     playerSectionLabel.Parent = mainFrame
 
-    playerInput = createInputRow("플레이어:", "", 355)
+    playerInput = createInputRow("플레이어:", "", 385)
     playerInput.PlaceholderText = "'me' 또는 플레이어명"
 
-    rankInput = createInputRow("직급:", "", 385)
+    rankInput = createInputRow("직급:", "", 415)
     rankInput.PlaceholderText = "예: Soldier, General"
 
-    displayNicknameInput = createInputRow("본닉 @ 붙이기:", "", 415)
+    displayNicknameInput = createInputRow("본닉 @ 붙이기:", "", 445)
     displayNicknameInput.PlaceholderText = "본닉"
 
-    usernameInput = createInputRow("디플닉:", "", 445)
+    usernameInput = createInputRow("디플닉:", "", 475)
     usernameInput.PlaceholderText = "디플닉"
 
     local changeButton = Instance.new("TextButton")
     changeButton.Size = UDim2.new(1, -20, 0, 30)
-    changeButton.Position = UDim2.new(0, 10, 0, 480)
+    changeButton.Position = UDim2.new(0, 10, 0, 510)
     changeButton.BackgroundColor3 = Color3.fromRGB(100, 200, 100)
     changeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
     changeButton.TextSize = 12
@@ -185,7 +190,7 @@ local function createGui()
 
     statusLabel = Instance.new("TextLabel")
     statusLabel.Size = UDim2.new(1, -20, 0, 45)
-    statusLabel.Position = UDim2.new(0, 10, 0, 520)
+    statusLabel.Position = UDim2.new(0, 10, 0, 550)
     statusLabel.BackgroundTransparency = 1
     statusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
     statusLabel.TextSize = 11
@@ -211,9 +216,15 @@ local function createGui()
 
     -- 버튼 연결
     killcamApplyButton.MouseButton1Click:Connect(function()
-        DISPLAY_NAME = displayInput.Text
-        ACCOUNT_NAME = accountInput.Text
-        REBIRTH_COUNT = rebirthInput.Text
+        DISPLAY_NAME = displayInput.Text ~= "" and displayInput.Text or DISPLAY_NAME
+        ACCOUNT_NAME = accountInput.Text ~= "" and accountInput.Text or ACCOUNT_NAME
+        REBIRTH_COUNT = rebirthInput.Text ~= "" and rebirthInput.Text or REBIRTH_COUNT
+        
+        local profileId = profileImageInput.Text
+        if profileId ~= "" then
+            PROFILE_IMAGE = "rbxthumb://type=AvatarHeadShot&id=" .. profileId .. "&w=420&h=420"
+        end
+        
         statusLabel.Text = "✅ 킬캠 설정 적용됨!"
     end)
 
@@ -281,6 +292,7 @@ function toggleGui()
         sizeYInput = nil
         offsetXInput = nil
         offsetYInput = nil
+        profileImageInput = nil
     else
         createGui()
         isGuiVisible = true
@@ -298,7 +310,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
     end
 end)
 
--- 킬캠 변경 함수 (환생수: KillerRebirth 경로 적용 + 계급장 픽셀 조절 통합)
+-- 킬캠 변경 함수 (환생수: KillerRebirth 경로 적용 + 계급장 픽셀 조절 통합 + 프로필 사진)
 local function changeKillcamNicknames()
     pcall(function()
         local ui = playerGui:FindFirstChild("UI")
@@ -327,7 +339,7 @@ local function changeKillcamNicknames()
             end
         end
         
-        -- 2️⃣ Killcard 내 본닉, 환생수(KillerRebirth), 계급장 변경
+        -- 2️⃣ Killcard 내 본닉, 환생수(KillerRebirth), 계급장, 프로필 사진 변경
         local killcard = deathScreen:FindFirstChild("Killcard")
         if killcard then
             local killedBy = killcard:FindFirstChild("KilledBy")
@@ -359,6 +371,21 @@ local function changeKillcamNicknames()
                     if child:IsA("ImageLabel") or child:IsA("ImageButton") then
                         child.ImageRectSize = Vector2.new(sX, sY)
                         child.ImageRectOffset = Vector2.new(oX, oY)
+                    end
+                end
+            end
+        end
+        
+        -- 3️⃣ 프로필 사진 변경 (Killer -> KillerIcon)
+        local killcard2 = deathScreen:FindFirstChild("Killcard")
+        if killcard2 then
+            local killedBy2 = killcard2:FindFirstChild("KilledBy")
+            if killedBy2 then
+                local killer = killedBy2:FindFirstChild("Killer")
+                if killer then
+                    local killerIcon = killer:FindFirstChild("KillerIcon")
+                    if killerIcon then
+                        killerIcon.Image = PROFILE_IMAGE
                     end
                 end
             end
