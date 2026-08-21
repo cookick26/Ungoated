@@ -8,7 +8,7 @@ local LocalPlayer = PlayerService.LocalPlayer
 -- 실시간 설정 변수
 local Settings = {
     FOV = 100,
-    MULTIPLIER = 12,
+    MULTIPLIER = 10,
     Enabled = true,
     ESPEnabled = true,
     AimKey = Enum.KeyCode.P,
