@@ -173,7 +173,7 @@ local function createCheckbox(text, default, posY, callback)
 end
 
 -- 1. FOV 슬라이더
-createSlider("FOV SIZE", 10, 500, Settings.FOV, 35, function(val)
+createSlider("FOV SIZE", 20, 300, Settings.FOV, 35, function(val)
     Settings.FOV = val
 end)
 
