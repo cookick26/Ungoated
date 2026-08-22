@@ -403,7 +403,7 @@ local function getClosest()
             
             local aimPart = nil
             if Settings.TargetPart == "Head" then
-                aimPart = p.Character:FindFirstChild("Head")
+                aimPart = p.Character:FindFirstChild("Head") or p.Character:FindFirstChild("UpperTorso") or p.Character:FindFirstChild("Torso")
             else
                 aimPart = p.Character:FindFirstChild("UpperTorso") or p.Character:FindFirstChild("Torso")
             end
