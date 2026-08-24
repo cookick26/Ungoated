@@ -11,7 +11,7 @@ local Settings = {
     MULTIPLIER = 10,
     Enabled = true,
     ESPEnabled = true,
-    AimKey = Enum.UserInputType.MouseButton2,
+    AimKey = Enum.KeyCode.P,
     ToggleKey = Enum.KeyCode.Equals,
     TargetPart = "Head",
     ESPDistance = 400,
@@ -173,7 +173,7 @@ local function createCheckbox(text, default, posY, callback)
 end
 
 -- 1. FOV 슬라이더
-createSlider("FOV SIZE", 20, 300, Settings.FOV, 35, function(val)
+createSlider("FOV SIZE", 10, 500, Settings.FOV, 35, function(val)
     Settings.FOV = val
 end)
 
@@ -403,7 +403,7 @@ local function getClosest()
             
             local aimPart = nil
             if Settings.TargetPart == "Head" then
-                aimPart = p.Character:FindFirstChild("Head") or p.Character:FindFirstChild("UpperTorso") or p.Character:FindFirstChild("Torso")
+                aimPart = p.Character:FindFirstChild("Head")
             else
                 aimPart = p.Character:FindFirstChild("UpperTorso") or p.Character:FindFirstChild("Torso")
             end
@@ -433,7 +433,7 @@ RunService.RenderStepped:Connect(function()
     FovCircle.Position = mousePos
     FovCircle.Radius = Settings.FOV
     
-    if UserInputService:IsMouseButtonPressed(Settings.AimKey) then
+    if UserInputService:IsKeyDown(Settings.AimKey) then
         local targetPos = getClosest()
         if targetPos then
             local diffX = targetPos.X - mousePos.X
