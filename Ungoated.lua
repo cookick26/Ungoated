@@ -433,7 +433,7 @@ RunService.RenderStepped:Connect(function()
     FovCircle.Position = mousePos
     FovCircle.Radius = Settings.FOV
     
-    if UserInputService:IsKeyDown(Settings.AimKey) then
+    if UserInputService:IsMouseButtonPressed(Settings.AimKey) then
         local targetPos = getClosest()
         if targetPos then
             local diffX = targetPos.X - mousePos.X
