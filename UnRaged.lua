@@ -303,7 +303,7 @@ local function startTPAttach()
         -- 상대 뒤에 부착 (매우 낮은 네트워크 부하)
         local direction = targetRoot.CFrame.LookVector
         local backOffset = -direction * offsetDistance
-        local newPos = targetRoot.CFrame.Position + backOffset + Vector3.new(0, 3, 0)
+        local newPos = targetRoot.CFrame.Position + backOffset + Vector3.new(0, 0, 0)
         
         humanoidRootPart.CFrame = CFrame.new(newPos)
     end)
