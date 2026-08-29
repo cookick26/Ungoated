@@ -266,7 +266,7 @@ local function getBackPosition(targetChar)
     local direction = targetRoot.CFrame.LookVector
     local backOffset = -direction * offsetDistance
     
-    return targetRoot.CFrame.Position + backOffset + Vector3.new(0, 3, 0)
+    return targetRoot.CFrame.Position + backOffset + Vector3.new(0, 0, 0)
 end
 
 -- 부착 방식 (한 번만 설정)
