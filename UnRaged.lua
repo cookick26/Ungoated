@@ -11,7 +11,7 @@ local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
 
 -- 설정값
 local targetPlayer = nil
-local offsetDistance = 2
+local offsetDistance = 3
 local isActive = false
 local screenGui = nil
 local statusLabel = nil
