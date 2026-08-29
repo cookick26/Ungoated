@@ -83,7 +83,7 @@ local function createUI()
     titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     titleLabel.TextSize = 18
     titleLabel.Font = Enum.Font.GothamBold
-    titleLabel.Text = "플레이어 선택"
+    titleLabel.Text = "UnRaged"
     titleLabel.BorderSizePixel = 0
     titleLabel.ZIndex = 1000000
     titleLabel.Parent = mainFrame
