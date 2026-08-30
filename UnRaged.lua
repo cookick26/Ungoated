@@ -1,4 +1,4 @@
--- 로블록스 플레이어 선택 UI 티피 스크립트 (mousemoverel 방식 - 수정됨)
+-- 로블록스 플레이어 선택 UI 티피 스크립트 (깊이 체크 추가)
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
@@ -12,11 +12,11 @@ local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
 
 -- 설정값
 local targetPlayer = nil
-local offsetDistance = 3
+local offsetDistance = 3.3
 local isActive = false
 local screenGui = nil
 local statusLabel = nil
-local MULTIPLIER = 1 -- 에임 민감도 조정값
+local MULTIPLIER = 1.2 -- 에임 민감도 조정값
 
 -- UI 드래그 함수
 local function makeDraggable(frame, mainFrame)
@@ -255,10 +255,11 @@ local function createUI()
     return screenGui
 end
 
--- 3D 위치를 2D 화면 좌표로 변환
+-- 3D 위치를 2D 화면 좌표로 변환 (깊이 체크 포함)
 local function worldToScreenPoint(worldPos)
     local screenPos = Camera:WorldToScreenPoint(worldPos)
-    return Vector2.new(screenPos.X, screenPos.Y)
+    local depth = screenPos.Z
+    return Vector2.new(screenPos.X, screenPos.Y), depth
 end
 
 -- 부착 및 에임 고정 방식
@@ -291,18 +292,22 @@ local function startTPAttach()
         local backPos = targetRoot.CFrame.Position + backOffset + Vector3.new(0, 0, 0)
         humanoidRootPart.CFrame = CFrame.new(backPos)
         
-        -- 2. 상대 머리에 에임 고정 (mousemoverel 방식)
-        local targetHeadScreenPos = worldToScreenPoint(targetHead.Position)
-        local mousePos = UserInputService:GetMouseLocation()
+        -- 2. 상대 머리에 에임 고정 (깊이 체크 포함)
+        local targetHeadScreenPos, depth = worldToScreenPoint(targetHead.Position)
         
-        local diffX = targetHeadScreenPos.X - mousePos.X
-        local diffY = targetHeadScreenPos.Y - mousePos.Y
-        
-        local finalDiffX = diffX * MULTIPLIER
-        local finalDiffY = diffY * MULTIPLIER
-        
-        -- 마우스를 상대적으로 이동
-        mousemoverel(finalDiffX, finalDiffY)
+        -- 깊이 체크: 상대가 카메라 앞에 있을 때만 에임 고정
+        if depth > 0 then
+            local mousePos = UserInputService:GetMouseLocation()
+            
+            local diffX = targetHeadScreenPos.X - mousePos.X
+            local diffY = targetHeadScreenPos.Y - mousePos.Y
+            
+            local finalDiffX = diffX * MULTIPLIER
+            local finalDiffY = diffY * MULTIPLIER
+            
+            -- 마우스를 상대적으로 이동
+            mousemoverel(finalDiffX, finalDiffY)
+        end
     end)
 end
 
@@ -315,25 +320,21 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
         if targetPlayer then
             isActive = not isActive
             if isActive then
-                print("✓ 티피 시작: " .. targetPlayer.Name)
-                wait(0.01) -- 0.3초 대기 후 에임 고정 시작
+                wait(0.01)
                 startTPAttach()
             else
-                print("✗ 티피 중지")
                 if updateConnection then
                     updateConnection:Disconnect()
                     updateConnection = nil
                 end
             end
-        else
-            print("⚠️ 플레이어를 먼저 선택해주세요")
         end
     end
     
     -- 오른쪽 Shift 키: UI 토글
     if input.KeyCode == Enum.KeyCode.RightShift then
         if screenGui then
-            screenGui.Enabled = not screenGui.Enabled                                
+            screenGui.Enabled = not screenGui.Enabled
         end
     end
 end)
