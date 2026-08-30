@@ -85,7 +85,7 @@ local function createUI()
     titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     titleLabel.TextSize = 18
     titleLabel.Font = Enum.Font.GothamBold
-    titleLabel.Text = "플레이어 선택"
+    titleLabel.Text = "UnRaged"
     titleLabel.BorderSizePixel = 0
     titleLabel.ZIndex = 1000000
     titleLabel.Parent = mainFrame
@@ -187,7 +187,7 @@ local function createUI()
     statusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
     statusLabel.TextSize = 12
     statusLabel.Font = Enum.Font.Gotham
-    statusLabel.Text = "플레이어를 선택하세요 | F: 시작/중지 | RShift: UI 토글"
+    statusLabel.Text = "Rage | F: 시작/중지 | RShift: UI 토글"
     statusLabel.BorderSizePixel = 0
     statusLabel.ZIndex = 999999
     statusLabel.Parent = mainFrame
@@ -333,8 +333,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
     -- 오른쪽 Shift 키: UI 토글
     if input.KeyCode == Enum.KeyCode.RightShift then
         if screenGui then
-            screenGui.Enabled = not screenGui.Enabled
-            print(screenGui.Enabled and "UI 표시됨" or "UI 숨겨짐")
+            screenGui.Enabled = not screenGui.Enabled                                
         end
     end
 end)
