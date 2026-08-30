@@ -289,7 +289,7 @@ local function startTPAttach()
         -- 1. 상대 뒤쪽으로 이동
         local direction = targetRoot.CFrame.LookVector
         local backOffset = -direction * offsetDistance
-        local backPos = targetRoot.CFrame.Position + backOffset + Vector3.new(0, 0, 0)
+        local backPos = targetRoot.CFrame.Position + backOffset + Vector3.new(0, -0.5, 0)
         humanoidRootPart.CFrame = CFrame.new(backPos)
         
         -- 2. 상대 머리에 에임 고정 (깊이 체크 포함)
