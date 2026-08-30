@@ -12,11 +12,12 @@ local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
 
 -- 설정값
 local targetPlayer = nil
-local offsetDistance = 4.5
+local offsetDistance = 3.3
 local isActive = false
 local screenGui = nil
 local statusLabel = nil
-local MULTIPLIER = 1.8 -- 에임 민감도 조정값
+local MULTIPLIER = 2 -- 에임 민감도 조정값
+local headOffsetY = -0.5 -- 머리 아래쪽 오프셋 (음수 = 아래)
 
 -- UI 드래그 함수
 local function makeDraggable(frame, mainFrame)
@@ -289,11 +290,12 @@ local function startTPAttach()
         -- 1. 상대 뒤쪽으로 이동
         local direction = targetRoot.CFrame.LookVector
         local backOffset = -direction * offsetDistance
-        local backPos = targetRoot.CFrame.Position + backOffset + Vector3.new(0, -0.5, 0)
+        local backPos = targetRoot.CFrame.Position + backOffset + Vector3.new(0, 0, 0)
         humanoidRootPart.CFrame = CFrame.new(backPos)
         
-        -- 2. 상대 머리에 에임 고정 (깊이 체크 포함)
-        local targetHeadScreenPos, depth = worldToScreenPoint(targetHead.Position)
+        -- 2. 상대 머리 아래쪽에 에임 고정 (깊이 체크 포함)
+        local aimPos = targetHead.Position + Vector3.new(0, headOffsetY, 0)
+        local targetHeadScreenPos, depth = worldToScreenPoint(aimPos)
         
         -- 깊이 체크: 상대가 카메라 앞에 있을 때만 에임 고정
         if depth > 0 then
