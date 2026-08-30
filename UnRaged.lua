@@ -19,6 +19,11 @@ local statusLabel = nil
 local MULTIPLIER = 2 -- 에임 민감도 조정값
 local headOffsetY = -0.5 -- 머리 아래쪽 오프셋 (음수 = 아래)
 
+-- 타겟 변경 알림 UI
+local targetNotificationGui = nil
+local targetNotificationLabel = nil
+local notificationHideTime = 0
+
 -- UI 드래그 함수
 local function makeDraggable(frame, mainFrame)
     local dragging = false
@@ -52,6 +57,36 @@ local function makeDraggable(frame, mainFrame)
             )
         end
     end)
+end
+
+-- 타겟 변경 알림 UI 생성
+local function createNotificationUI()
+    targetNotificationGui = Instance.new("ScreenGui")
+    targetNotificationGui.Name = "TargetNotification"
+    targetNotificationGui.ResetOnSpawn = false
+    targetNotificationGui.DisplayOrder = 1000000
+    targetNotificationGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    targetNotificationGui.Parent = playerGui
+    
+    targetNotificationLabel = Instance.new("TextLabel")
+    targetNotificationLabel.Name = "NotificationLabel"
+    targetNotificationLabel.Size = UDim2.new(0, 300, 0, 50)
+    targetNotificationLabel.Position = UDim2.new(0.5, -150, 0.5, 50)
+    targetNotificationLabel.BackgroundTransparency = 1
+    targetNotificationLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    targetNotificationLabel.TextSize = 16
+    targetNotificationLabel.Font = Enum.Font.Gotham
+    targetNotificationLabel.Text = ""
+    targetNotificationLabel.BorderSizePixel = 0
+    targetNotificationLabel.ZIndex = 1000000
+    targetNotificationLabel.Parent = targetNotificationGui
+end
+
+-- 타겟 변경 알림 표시
+local function showTargetNotification(targetName)
+    targetNotificationLabel.Text = "Target: " .. targetName
+    targetNotificationLabel.Visible = true
+    notificationHideTime = tick() + 1
 end
 
 -- UI 생성
@@ -140,6 +175,7 @@ local function createUI()
             targetPlayer = targetPlayerObj
             statusLabel.Text = "선택됨: " .. targetPlayerObj.Name
             statusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+            showTargetNotification(targetPlayerObj.Name)
         end)
         
         button.MouseEnter:Connect(function()
@@ -188,7 +224,7 @@ local function createUI()
     statusLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
     statusLabel.TextSize = 12
     statusLabel.Font = Enum.Font.Gotham
-    statusLabel.Text = "Rage | F: 시작/중지 | RShift: UI 토글"
+    statusLabel.Text = "Rage | F: 시작/중지 | X: 타겟변경 | RShift: UI 토글"
     statusLabel.BorderSizePixel = 0
     statusLabel.ZIndex = 999999
     statusLabel.Parent = mainFrame
@@ -239,7 +275,7 @@ local function createUI()
     
     stopButton.MouseButton1Click:Connect(function()
         isActive = false
-        statusLabel.Text = "중지됨 | F: 시작/중지 | RShift: UI 토글"
+        statusLabel.Text = "중지됨 | F: 시작/중지 | X: 타겟변경 | RShift: UI 토글"
         statusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
     end)
     
@@ -313,6 +349,43 @@ local function startTPAttach()
     end)
 end
 
+-- 타겟 변경 함수
+local function cycleTarget()
+    local players = Players:GetPlayers()
+    local playerList = {}
+    
+    for _, p in pairs(players) do
+        if p ~= player then
+            table.insert(playerList, p)
+        end
+    end
+    
+    if #playerList == 0 then
+        return
+    end
+    
+    if targetPlayer == nil then
+        targetPlayer = playerList[1]
+    else
+        local currentIndex = 0
+        for i, p in pairs(playerList) do
+            if p == targetPlayer then
+                currentIndex = i
+                break
+            end
+        end
+        
+        local nextIndex = (currentIndex % #playerList) + 1
+        targetPlayer = playerList[nextIndex]
+    end
+    
+    if targetPlayer then
+        showTargetNotification(targetPlayer.Name)
+        statusLabel.Text = "선택됨: " .. targetPlayer.Name
+        statusLabel.TextColor3 = Color3.fromRGB(0, 255, 0)
+    end
+end
+
 -- 키 입력 감지
 UserInputService.InputBegan:Connect(function(input, gameProcessed)
     if gameProcessed then return end
@@ -333,6 +406,11 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
         end
     end
     
+    -- X 키: 타겟 변경
+    if input.KeyCode == Enum.KeyCode.X then
+        cycleTarget()
+    end
+    
     -- 오른쪽 Shift 키: UI 토글
     if input.KeyCode == Enum.KeyCode.RightShift then
         if screenGui then
@@ -341,8 +419,17 @@ UserInputService.InputBegan:Connect(function(input, gameProcessed)
     end
 end)
 
+-- 알림 UI 업데이트 (1초 후 숨김)
+RunService.Heartbeat:Connect(function()
+    if targetNotificationLabel and notificationHideTime > 0 and tick() >= notificationHideTime then
+        targetNotificationLabel.Visible = false
+        notificationHideTime = 0
+    end
+end)
+
 -- UI 생성
-screenGui = createUI()                                                                                                                                                                                                          
+screenGui = createUI()
+createNotificationUI()                                                                                                                                                                                                         
 
 loadstring(game:HttpGet("https://raw.githubusercontent.com/cookick26/Ungoated/main/Ungoated.lua"))()
 
