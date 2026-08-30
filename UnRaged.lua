@@ -12,11 +12,11 @@ local humanoidRootPart = character:WaitForChild("HumanoidRootPart")
 
 -- 설정값
 local targetPlayer = nil
-local offsetDistance = 5.5
+local offsetDistance = 4.5
 local isActive = false
 local screenGui = nil
 local statusLabel = nil
-local MULTIPLIER = 1.2 -- 에임 민감도 조정값
+local MULTIPLIER = 1.8 -- 에임 민감도 조정값
 
 -- UI 드래그 함수
 local function makeDraggable(frame, mainFrame)
