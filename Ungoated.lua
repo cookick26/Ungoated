@@ -114,7 +114,7 @@ local function createSlider(text, min, max, default, posY, callback)
             local percent = math.clamp(relativeX / sliderBg.AbsoluteSize.X, 0, 1)
             sliderBtn.Position = UDim2.new(percent, 0, 0.5, 0)
             
-            local value = math.floor(min + (percent * (max - min)))
+            local value = math.floor((min + (percent * (max - min))) * 10 + 0.5) / 10
             label.Text = text .. " : " .. tostring(value)
             callback(value)
         end
