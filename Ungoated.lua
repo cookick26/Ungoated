@@ -178,7 +178,7 @@ createSlider("FOV SIZE", 10, 500, Settings.FOV, 35, function(val)
 end)
 
 -- 2. 스무스 슬라이더
-createSlider("SMOOTHING", 1, 15, Settings.MULTIPLIER, 85, function(val)
+createSlider("SMOOTHING", 0.5, 10, Settings.MULTIPLIER, 85, function(val)
     Settings.MULTIPLIER = val
 end)
 
